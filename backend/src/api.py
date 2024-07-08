@@ -5,7 +5,7 @@ from flask_cors import CORS
 from db_config import db_config
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS if needed
+CORS(app)
 
 # Gets DB auth creds
 config = db_config().get_config()
