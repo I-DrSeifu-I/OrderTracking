@@ -1,21 +1,31 @@
 import mysql.connector
 from mysql.connector import errorcode
+from uuid import uuid4
+from dotenv import load_dotenv
+import os
+
+#loads env variables
+load_dotenv()
 
 config = {
-    'user': 'root',
-    'password': 'root',
-    'host': 'localhost',
-    'database': 'Food_orders',
+    'user': os.getenv('user'),
+    'password': os.getenv('password'),
+    'host': os.getenv('host'),
+    'database': os.getenv('DB'),
 }
 
 # SQL statement to create a table
 create_table_query = """
-CREATE TABLE customer_order (
-    customer_id INT AUTO_INCREMENT PRIMARY KEY,
-    first_name VARCHAR(50),
-    last_name VARCHAR(50),
-    order_date DATE
-)
+CREATE TABLE order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
+    menu_id INT,
+    quantity INT,
+    price DECIMAL(10, 2),
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (menu_id) REFERENCES menu(id)
+);
+
 """
 
 try:

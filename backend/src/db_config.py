@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-import redis
 import os
 
 #loads env variables

@@ -1,12 +1,18 @@
 import mysql.connector
 from mysql.connector import errorcode
 from datetime import datetime
+from dotenv import load_dotenv
+import os
+
+#loads env variables
+load_dotenv()
+
 
 config = {
-    'user': 'root',
-    'password': 'root',
-    'host': 'localhost',
-    'database': 'Food_orders',
+    'user': os.getenv('user'),
+    'password': os.getenv('password'),
+    'host': os.getenv('host'),
+    'database': os.getenv('DB'),
 }
 
 # Function to get user input

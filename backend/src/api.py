@@ -25,9 +25,6 @@ def create_db_connection():
         print(err)
         return None
     
-def get_uuid():
-    return uuid4().hex
-
 @app.route('/register', methods=['POST'])
 def register_user():
     cnx = create_db_connection()
@@ -40,7 +37,6 @@ def register_user():
     password = request.json["password"]
     first_name = request.json["first_name"]
     last_name = request.json["last_name"]
-    customer_id = get_uuid()
 
     # Check if the user already exists
     query = "SELECT * FROM users WHERE email = %s"
@@ -55,8 +51,8 @@ def register_user():
     # If user doesn't exist, create a new user
     try:
         hashed_pwd = bcrypt.generate_password_hash(password)
-        insert_query = "INSERT INTO users (customer_id, email, first_name, last_name, pwd) VALUES (%s, %s, %s, %s, %s)"
-        cursor.execute(insert_query, (customer_id, email, first_name, last_name, hashed_pwd))
+        insert_query = "INSERT INTO users (email, first_name, last_name, password) VALUES (%s, %s, %s, %s)"
+        cursor.execute(insert_query, (email, first_name, last_name, hashed_pwd))
         cnx.commit()
         cursor.close()
         cnx.close()
@@ -73,65 +69,167 @@ def login_user():
     cnx = create_db_connection()
     if cnx is None:
         return jsonify({"error": "Failed to connect to the database"}), 500
-    
+
     cursor = cnx.cursor(dictionary=True)
     
-    email = request.json["email"]
-    password = request.json["password"]
+    data = request.get_json()
+    if not data or 'email' not in data or 'password' not in data:
+        return jsonify({"error": "Invalid input"}), 400
+    
+    email = data["email"]
+    password = data["password"]
 
     query = "SELECT * FROM users WHERE email = %s"
     cursor.execute(query, (email,))
     user = cursor.fetchone()
 
-    if user is None or not bcrypt.check_password_hash(user['pwd'], password):
+    if user is None or not bcrypt.check_password_hash(user['password'], password):
         cursor.close()
         cnx.close()
         return jsonify({"error": "Invalid email or password"}), 401
     
-    Session["user_id"] = user['customer_id']
+    # Store the user ID in the session
+    session["user_id"] = user['id']
     
     cursor.close()
     cnx.close()
     return jsonify({
         "message": "Login successful",
         "email": email
-        }), 200
+    }), 200
 
-# API endpoint to retrieve all customer orders
-@app.route('/customer_orders', methods=['GET'])
-def get_customer_orders():
+
+@app.route('/logout', methods=['POST'])
+def logout_user():
+    session.pop("user_id", None)
+    return jsonify({"message": "Logout successful"}), 200
+
+
+@app.route('/get-orders', methods=['GET'])
+def get_orders():
+
+    #gets the user ID from the current session
+    user_id = session.get('user_id')
+
+    if not user_id:
+        return jsonify({"error":"User is not logged in" }), 401
+    
     cnx = create_db_connection()
-    if not cnx:
-        return jsonify({"error": "Unable to connect to the database"}), 500
+    if cnx is None:
+        return jsonify({"error": "Unable to connect to database"}), 500
+    
     cursor = cnx.cursor(dictionary=True)
-    query = "SELECT * FROM customer_order"
-    cursor.execute(query)
-    results = cursor.fetchall()
+
+    query = """
+    SELECT o.id AS order_id, o.order_date, o.total_amount, u.email
+    FROM orders o
+    JOIN users u ON o.user_id = u.id
+    WHERE o.user_id = %s
+    ORDER BY o.order_date DESC
+    """
+    cursor.execute(query, (user_id,))
+
+    orders = cursor.fetchall()
+
     cursor.close()
     cnx.close()
-    return jsonify(results)
 
-# API endpoint to add a new customer order
-@app.route('/customer_orders', methods=['POST'])
-def add_customer_order():
+    return jsonify({"orders":orders}), 200
+
+
+@app.route('/order-food', methods=['POST'])
+def order_food():
     data = request.json
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
-    order_date = data.get('order_date')
-    
-    if not all([first_name, last_name, order_date]):
-        return jsonify({"error": "Missing required fields"}), 400
-    
+    order_item_number = data.get('order_item_number')
+    quantity_of_food = data.get('quantity')
+    user_id = session.get("user_id")
+    status = "Pending"
+
+    if quantity_of_food is None or not isinstance(quantity_of_food, int):
+        return jsonify({"error": "Invalid quantity provided"}), 400
+
     cnx = create_db_connection()
     if not cnx:
         return jsonify({"error": "Unable to connect to the database"}), 500
-    cursor = cnx.cursor()
-    query = "INSERT INTO customer_order (first_name, last_name, order_date) VALUES (%s, %s, %s)"
-    cursor.execute(query, (first_name, last_name, order_date))
-    cnx.commit()
-    cursor.close()
-    cnx.close()
-    return jsonify({"message": "Customer order added successfully"}), 201
+
+    try:
+        cursor = cnx.cursor(dictionary=True)
+        
+        # Get the price of the menu item
+        query = "SELECT price FROM menu WHERE id = %s"
+        cursor.execute(query, (order_item_number,))
+        menu_item = cursor.fetchone()
+
+        if not menu_item:
+            return jsonify({"error": "Menu item not found"}), 404
+
+        try:
+            menu_item_price = float(menu_item["price"])  # Convert to float if necessary
+        except (TypeError, ValueError):
+            return jsonify({"error": "Invalid price data in menu"}), 500
+
+        try:
+            quantity_of_food = int(quantity_of_food)  # Convert to integer if necessary
+        except (TypeError, ValueError):
+            return jsonify({"error": "Invalid quantity data"}), 400
+
+        total_price = menu_item_price * quantity_of_food
+
+        query = "INSERT INTO orders (user_id, total_amount, status) VALUES (%s, %s, %s)"
+        cursor.execute(query, (user_id, total_price, status))
+        cnx.commit()
+
+        return jsonify({
+            "message": "Customer order added successfully",
+            "food_item": order_item_number,
+            "total_price": total_price
+        }), 201
+
+    except Exception as e:
+        return jsonify({"error": f"Unable to process the order: {str(e)}"}), 500
+
+    finally:
+        cursor.close()
+        cnx.close()
+
+
+
+@app.route('/food-is-done', methods=['POST'])
+def update_food_order():
+    data = request.json
+    order_id = data.get('order_id')
+    order_status = data.get('status')
+    user_id = session.get('user_id')
+
+    if not order_id:
+        return jsonify({"error": "Please enter a valid order ID"}), 400
+
+    if not order_status:
+        return jsonify({"error": "Please provide a status"}), 400
+    
+    try:
+        cnx = create_db_connection()  # Call the function to get a connection
+    except Exception as e:
+        return jsonify({"error": f"Unable to connect to DB: {e}"}), 500
+
+    try:
+        cursor = cnx.cursor()
+        query = """
+        UPDATE orders SET status = %s WHERE id = %s AND user_id = %s
+        """
+        cursor.execute(query, (order_status, order_id, user_id))
+        cursor.callproc('move_completed_orders')
+        cnx.commit()  # Commit changes on the connection
+        return jsonify({"message": "Order status updated successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Unable to update order: {e}"}), 500
+
+    finally:
+        cursor.close()
+        cnx.close()  
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
