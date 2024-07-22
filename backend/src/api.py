@@ -10,7 +10,7 @@ from uuid import uuid4
 
 app = Flask(__name__)
 app.config.from_object(AppConfig)
-CORS(app)
+CORS(app, supports_credentials=True)
 bcrypt = Bcrypt(app)
 server_session = Session(app)
 
@@ -105,7 +105,7 @@ def logout_user():
     return jsonify({"message": "Logout successful"}), 200
 
 
-@app.route('/get-orders', methods=['GET'])
+@app.route('/get_orders', methods=['GET'])
 def get_orders():
 
     #gets the user ID from the current session
@@ -136,8 +136,35 @@ def get_orders():
 
     return jsonify({"orders":orders}), 200
 
+@app.route('/get_menu', methods=['GET'])
+def get_menu():
+    user_id = session.get('user_id')
+    print(f"Retrieved session user_id: {user_id}")
 
-@app.route('/order-food', methods=['POST'])
+    if not user_id:
+        return jsonify({"error": "User is not logged in"}), 401
+    
+    cnx = create_db_connection()
+    if cnx is None:
+        return jsonify({"error": "Unable to connect to database"}), 500
+    
+    cursor = cnx.cursor(dictionary=True)
+    try:
+        query = "SELECT * FROM menu"
+        cursor.execute(query)
+
+        menu = cursor.fetchall()
+
+        cursor.close()
+        cnx.close()
+
+        return jsonify(menu), 200
+    except Exception as e:
+        return jsonify({"error": f"Unable to return menu items, {e}"}), 500
+
+
+
+@app.route('/order_food', methods=['POST'])
 def order_food():
     data = request.json
     order_item_number = data.get('order_item_number')
@@ -193,8 +220,7 @@ def order_food():
         cnx.close()
 
 
-
-@app.route('/food-is-done', methods=['POST'])
+@app.route('/update_food_status', methods=['POST'])
 def update_food_order():
     data = request.json
     order_id = data.get('order_id')

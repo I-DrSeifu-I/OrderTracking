@@ -1,0 +1,48 @@
+/* src/components/css_files/HomePage.css */
+
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.menu-container h2 {
+  margin-bottom: 20px;
+}
+
+.menu-table {
+  width: 80%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.menu-table th, .menu-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.menu-table th {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.menu-table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.menu-table tr:hover {
+  background-color: #ddd;
+}
+
+.order-button {
+  padding: 10px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
