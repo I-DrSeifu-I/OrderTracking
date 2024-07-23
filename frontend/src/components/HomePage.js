@@ -15,14 +15,13 @@ const HomePage = () => {
           credentials: 'include',  // Include credentials (cookies) in the request
         });
 
-        console.log(response.status)
         if (response.status === 401) {
           navigate('/login');  // Redirect to login if unauthorized
           return;
         }
 
         const data = await response.json();
-  
+
         if (response.ok) {
           setMenu(data);
         } else {
@@ -37,15 +36,15 @@ const HomePage = () => {
   }, [navigate]);
 
   const handleOrderClick = () => {
-    // Implement your order handling logic here
     console.log('Order button clicked!');
+    // Implement your order handling logic here
     // For example, navigate to an order page or show a modal
     // navigate('/order');
   };
 
   return (
     <div className="menu-container">
-      <h2>Menu</h2>
+      <h2>Seifu's Sizzle Menu</h2>
       {error && <p className="error-message">{error}</p>}
       <table className="menu-table">
         <thead>

@@ -1,33 +1,58 @@
 /* src/components/css_files/LoginPage.css */
 
-.form-container {
+.login-container {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   height: 100vh;
-  background-color: #f5f5f5;
+  background-image: linear-gradient(120deg, #140c16 0%, #751321 100%);
+  font-family: 'Roboto', sans-serif;
 }
 
-.form-container h2 {
+.login-box {
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+.login-box h2 {
   margin-bottom: 20px;
+  font-size: 24px;
+  color: #333;
+  font-family: serif;
 }
 
 .input-field {
-  margin-bottom: 10px;
-  padding: 10px;
-  width: 200px;
+  margin-bottom: 20px;
+  padding: 15px;
+  width: 250px;
+  border: 1px solid #ddd;
+  border-radius: 25px;
+  outline: none;
+  transition: border 0.3s;
+}
+
+.input-field:focus {
+  border: 1px solid #f093fb;
 }
 
 .login-button {
-  padding: 10px 20px;
-  background-color: #007BFF;
+  padding: 15px 30px;
+  background-color: #f5576c;
   color: white;
   border: none;
+  border-radius: 25px;
   cursor: pointer;
+  transition: background-color 0.3s;
 }
 
-.error-message {
+.login-button:hover {
+  background-color: #f093fb;
+}
+
+.error {
   color: red;
-  margin-top: 10px;
+  margin-bottom: 20px;
 }
