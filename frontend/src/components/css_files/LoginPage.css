@@ -1,11 +1,9 @@
-/* src/components/css_files/LoginPage.css */
-
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-image: linear-gradient(120deg, #140c16 0%, #751321 100%);
+  background-image: linear-gradient(120deg, #4e0408 30%, #0e0341 100%);
   font-family: 'Roboto', sans-serif;
 }
 

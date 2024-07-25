@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './css_files/HomePage.css';
+import MenuPopup from './MenuPopup';
 
 const HomePage = () => {
   const [menu, setMenu] = useState([]);
@@ -12,11 +13,11 @@ const HomePage = () => {
       try {
         const response = await fetch('http://localhost:5000/get_menu', {
           method: 'GET',
-          credentials: 'include',  // Include credentials (cookies) in the request
+          credentials: 'include',
         });
 
         if (response.status === 401) {
-          navigate('/login');  // Redirect to login if unauthorized
+          navigate('/login');
           return;
         }
 
@@ -35,40 +36,15 @@ const HomePage = () => {
     fetchMenu();
   }, [navigate]);
 
-  const handleOrderClick = () => {
-    console.log('Order button clicked!');
-    // Implement your order handling logic here
-    // For example, navigate to an order page or show a modal
-    // navigate('/order');
-  };
-
   return (
     <div className="menu-container">
       <h2>Seifu's Sizzle Menu</h2>
       {error && <p className="error-message">{error}</p>}
-      <table className="menu-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Price</th>
-            <th>Availability</th>
-          </tr>
-        </thead>
-        <tbody>
-          {menu.map((item) => (
-            <tr key={item.id}>
-              <td>{item.name}</td>
-              <td>{item.description}</td>
-              <td>${item.price}</td>
-              <td>{item.available ? "Available" : "Unavailable"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <button className="order-button" onClick={handleOrderClick}>
-        Place an Order
-      </button>
+      <div className="popups-container">
+        {menu.map((item) => (
+          <MenuPopup key={item.id} item={item} />
+        ))}
+      </div>
     </div>
   );
 };
